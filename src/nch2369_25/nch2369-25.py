@@ -121,17 +121,43 @@ def espectro_diseno(R:int, xi:float, tipo_suelo:str, zona:int, categoria:str, T_
         # Obtener espectro de referencia
         S_aH_TH = espectro_referencia(tipo_suelo, zona)
         
-        params = parametros_suelo(tipo_suelo)
-        T1 = params['T1']
-        
+        # Calcular R_star
+        T1 = parametros_suelo(tipo_suelo)['T1']
         C_r = 0.16 * R
+        
+        # Ajuste de R_star según T_star
         if R ==1:
                 R_star = 1
         elif R !=1 and T_star >= C_r *T1:
                 R_star = R
         elif R !=1 and T_star < C_r *T1:
                 R_star = 1.5 + (R + 1.5) * T_star / (C_r * T1)
+        
         # Calcular espectro de diseño
-        S_a_TH = S_aH_TH / I
+        S_a_TH = I * S_aH_TH/R_star * (0.05 / xi) ** 0.4
         
         return S_a_TH
+
+def coef_vertical(categoria:str, tipo_suelo:str, zona:int):
+        """
+        Calcula el coeficiente de sísmico vertical según el tipo de suelo.
+
+        Parámetros:
+        tipo_suelo (str): Tipo de suelo ('A', 'B', 'C', 'D', 'E')
+
+        Retorna:
+        float: Coeficiente de sísmico vertical C_v
+        """
+        I = coeficiente_importancia(categoria)
+        A_r = coeficiente_aceleración(zona)[1]
+        S = parametros_suelo(tipo_suelo)['S']
+        
+        C_v_values = {
+        "A": 1.2 *I *A_r *S,
+        "B": 1.2 *I *A_r *S,
+        "C": 1.2 *I *A_r *S,
+        "D": 1.1 *I *A_r *S,
+        "E": I *A_r *S
+        }
+        
+        return C_v_values[tipo_suelo]
